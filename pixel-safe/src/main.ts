@@ -1,4 +1,4 @@
-import { Application, Assets, Sprite, Ticker } from 'pixi.js';
+import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
 
 (async () => {
     const app = new Application();
@@ -10,13 +10,16 @@ import { Application, Assets, Sprite, Ticker } from 'pixi.js';
 
     document.body.appendChild(app.canvas);
 
+  
     const texture = await Assets.load('./assets/bg.png');
     const vaultTexture = await Assets.load('./assets/door.png');
     const handleTexture = await Assets.load('./assets/handle.png');
     const handleShadowTexture = await Assets.load('./assets/handleShadow.png');
     const doorOpenTexture = await Assets.load('./assets/doorOpen.png');
     const doorOpenShadowTexture = await Assets.load('./assets/doorOpenShadow.png');
+    // const blinkTexture = await Assets.load('./assets/blink.png');
 
+  
     const door = new Sprite(vaultTexture);
     door.anchor.set(0.5);
     door.x = app.screen.width / 2 + 15;
@@ -29,32 +32,35 @@ import { Application, Assets, Sprite, Ticker } from 'pixi.js';
     doorOpen.x = app.screen.width / 2 + 450;
     doorOpen.y = app.screen.height / 2 - 14;
     doorOpen.width = app.screen.width * 0.32;
-    doorOpen.height = door.width * (vaultTexture.height / vaultTexture.width);
+    doorOpen.height = doorOpen.width * (doorOpenTexture.height / doorOpenTexture.width);
 
     const doorOpenShadow = new Sprite(doorOpenShadowTexture);
     doorOpenShadow.anchor.set(0.5);
     doorOpenShadow.x = app.screen.width / 2 + 460;
     doorOpenShadow.y = app.screen.height / 2 + 10;
     doorOpenShadow.width = app.screen.width * 0.32;
-    doorOpenShadow.height = door.width * (vaultTexture.height / vaultTexture.width);
+    doorOpenShadow.height = doorOpenShadow.width * (doorOpenShadowTexture.height / doorOpenShadowTexture.width);
 
     const handle = new Sprite(handleTexture);
     handle.anchor.set(0.5);
     handle.x = app.screen.width / 2 - 8;
     handle.y = app.screen.height / 2 - 14;
     handle.width = app.screen.width * 0.12;
-    handle.height = app.screen.height * 0.27;
+    handle.height = app.screen.height * 0.32;
+    handle.height = handle.width * (handleTexture.height / handleTexture.width);
 
     const handleShadow = new Sprite(handleShadowTexture);
     handleShadow.anchor.set(0.5);
     handleShadow.x = app.screen.width / 2 - 8;
     handleShadow.y = app.screen.height / 2 - 3;
     handleShadow.width = app.screen.width * 0.12;
-    handleShadow.height = app.screen.height * 0.27;
+    handleShadow.height = app.screen.height * 0.32;
+    handleShadow.height = handleShadow.width * (handleShadowTexture.height / handleShadowTexture.width);
 
     const background = new Sprite(texture);
     background.width = app.screen.width;
     background.height = app.screen.height;
+  
 
     app.stage.addChild(background);
     app.stage.addChild(door);
@@ -62,6 +68,137 @@ import { Application, Assets, Sprite, Ticker } from 'pixi.js';
     app.stage.addChild(doorOpen);
     app.stage.addChild(handleShadow);
     app.stage.addChild(handle);
+
+    //=======TESTING=======
+    function resizeBackground() {
+      const bgRatio = background.texture.width / background.texture.height;
+      const screenRatio = app.screen.width / app.screen.height;
+
+      if (screenRatio > bgRatio) {
+        background.width = app.screen.width;
+        background.height = app.screen.width / bgRatio;
+      } else {
+        background.height = app.screen.height;
+        background.width = app.screen.height * bgRatio;
+      }
+
+      background.x = (app.screen.width - background.width) / 2;
+      background.y = (app.screen.height - background.height) / 2;
+    }
+    //=======TESTING=======
+    
+    
+    
+    
+
+    const timerStyle = new TextStyle({
+      fontFamily: 'Arial',
+      fontSize: 55,
+      fill: '#ff0000',
+      stroke: '#000000',
+      align: 'center',
+    });
+
+    const timerText = new Text('30', timerStyle);
+    timerText.anchor.set(0.5);
+timerText.x = app.screen.width / 3 - 45;  
+timerText.y = app.screen.height / 2 - 36;
+    app.stage.addChild(timerText);
+
+    let countdownInterval: ReturnType<typeof setInterval> | null = null;
+
+function startTimer(seconds: number) {
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    let timePassed = 0;
+    timerText.text = timePassed.toString();
+    timerText.visible = true;
+
+    countdownInterval = setInterval(() => {
+        timePassed++;
+        timerText.text = timePassed.toString();
+
+        if (timePassed >= seconds) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            timerText.visible = false;
+
+            console.log('%cTime is up! Generating a new code.', 'color: orange');
+            secretCombination = generateCombination();
+            inputSequence = [];
+            currentStepCount = 0;
+            currentDirection = null;
+            unlocked = false;
+        }
+    }, 1000);
+}
+
+
+    
+
+function resizeGame() {
+    app.renderer.resize(window.innerWidth, window.innerHeight);
+    
+   
+    const originalBgWidth = background.texture.width;
+    const originalBgHeight = background.texture.height;
+
+    const screenRatio = app.screen.width / app.screen.height;
+    const bgRatio = originalBgWidth / originalBgHeight;
+
+    let scaleFactor;
+
+    if (screenRatio > bgRatio) {
+        scaleFactor = app.screen.width / originalBgWidth;
+    } else {
+        scaleFactor = app.screen.height / originalBgHeight;
+    }
+    
+
+   
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        console.log('mobile view active');
+        scaleFactor *= 0.5; 
+    } else {
+        console.log('desktop view');
+    }
+
+    
+    background.width = originalBgWidth * scaleFactor;
+    background.height = originalBgHeight * scaleFactor;
+
+    background.x = (app.screen.width - background.width) / 2;
+    background.y = (app.screen.height - background.height) / 2;
+
+    
+    door.scale.set(scaleFactor);
+    door.position.set(app.screen.width / 2 + 57 * scaleFactor, app.screen.height / 2 - 44 * scaleFactor);
+
+    doorOpen.scale.set(scaleFactor);
+    doorOpen.position.set(app.screen.width / 2 + 1475 * scaleFactor, app.screen.height / 2 - 41 * scaleFactor);
+
+    doorOpenShadow.scale.set(scaleFactor);
+    doorOpenShadow.position.set(app.screen.width / 2 + 1533 * scaleFactor, app.screen.height / 2 + 45 * scaleFactor);
+
+    const handleScale = scaleFactor * 1.1;
+    handle.scale.set(handleScale);
+    handle.position.set(app.screen.width / 2 - 33 * scaleFactor, app.screen.height / 2 - 45 * scaleFactor);
+
+    handleShadow.scale.set(handleScale);
+    handleShadow.position.set(app.screen.width / 2 - 33 * scaleFactor, app.screen.height / 2 + 5 * scaleFactor);
+
+    timerText
+    timerText.scale.set(scaleFactor);
+    timerText.position.set(app.screen.width / 2 - 1180 * scaleFactor, app.screen.height / 2 - 145 * scaleFactor);
+
+
+}
+
+
+
+
+window.addEventListener('resize', resizeGame);
+resizeGame(); 
 
     doorOpen.visible = false;
     doorOpenShadow.visible = false;
@@ -113,7 +250,11 @@ import { Application, Assets, Sprite, Ticker } from 'pixi.js';
     function generateCombination(): CombinationStep[] {
         if (codeResetTimer) clearTimeout(codeResetTimer);
 
+     
+        startTimer(30);
+
         codeResetTimer = setTimeout(() => {
+
             console.log('%cTime is up! Generating a new code.', 'color: orange');
             secretCombination = generateCombination();
             inputSequence = [];
@@ -239,27 +380,76 @@ import { Application, Assets, Sprite, Ticker } from 'pixi.js';
     }
 
     function checkCombination() {
-        if (unlocked) return;
+    if (unlocked) return;
 
-        console.log('%cEntered combination:', 'color: cyan', inputSequence);
-        console.log('%cExpected combination:', 'color: yellow', secretCombination);
+    console.log('%cEntered combination:', 'color: cyan', inputSequence);
+    console.log('%cExpected combination:', 'color: yellow', secretCombination);
 
-        const match = inputSequence.every((step, i) =>
-            step.number === secretCombination[i].number &&
-            step.direction === secretCombination[i].direction
-        );
+    const match = inputSequence.every((step, i) =>
+        step.number === secretCombination[i].number &&
+        step.direction === secretCombination[i].direction
+    );
 
-        if (match) {
-            console.log('%cUnlocked! 🎉', 'color: lime');
-            unlocked = true;
-            door.visible = false;
-            handle.visible = false;
-            handleShadow.visible = false;
-            doorOpen.visible = true;
-            doorOpenShadow.visible = true;
-        } else {
-            console.log('%cWrong combination. Spinning left and resetting...', 'color: red');
-            spinHandleAndReset();
-        }
+    if (match) {
+        console.log('%cUnlocked! 🎉', 'color: lime');
+        unlocked = true;
+        door.visible = false;
+        handle.visible = false;
+        handleShadow.visible = false;
+        doorOpen.visible = true;
+        doorOpenShadow.visible = true;
+
+        setTimeout(() => {
+           
+            doorOpen.visible = false;
+            doorOpenShadow.visible = false;
+
+            
+            door.visible = true;
+            handle.visible = true;
+            handleShadow.visible = true;
+
+            
+            let rotation = 0;
+            const fullRotation = Math.PI * 2;  
+            const speed = 0.15;
+
+            const rotateHandle = (ticker: Ticker) => {
+                const step = speed * ticker.deltaTime;
+                rotation += step;
+
+                handle.rotation += step;
+                handleShadow.rotation += step;
+
+                if (rotation >= fullRotation) {
+                    app.ticker.remove(rotateHandle);
+
+                    
+                    unlocked = false;
+                    inputSequence = [];
+                    currentDirection = null;
+                    currentStepCount = 0;
+
+                    secretCombination = generateCombination();
+
+                    if (codeResetTimer) {
+                        clearTimeout(codeResetTimer);
+                        codeResetTimer = null;
+                    }
+                }
+            };
+
+            app.ticker.add(rotateHandle);
+
+        }, 5000);
+
+        
+        timerText.visible = false;
+        if (countdownInterval) clearInterval(countdownInterval);
+    } else {
+        console.log('%cWrong combination. Spinning left and resetting...', 'color: red');
+        spinHandleAndReset();
     }
+}
+
 })();
