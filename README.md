@@ -1,2 +1,2 @@
 # -treasure-vault-mini-game
-Given task from DreamShot: Create a mini game where the player has to unlock a vault safe in order to get the treasure inside.
+🚀 Made with Vite — Install with `npm install`, launch the game with `npm run dev`, and build for production with `npm run build`.
