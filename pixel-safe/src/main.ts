@@ -17,9 +17,15 @@ import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
     const handleShadowTexture = await Assets.load('./assets/handleShadow.png');
     const doorOpenTexture = await Assets.load('./assets/doorOpen.png');
     const doorOpenShadowTexture = await Assets.load('./assets/doorOpenShadow.png');
-    // const blinkTexture = await Assets.load('./assets/blink.png');
+    const blinkTexture = await Assets.load('./assets/blink.png');
 
-  
+    const blink = new Sprite(blinkTexture);
+    blink.anchor.set(0.5);
+    blink.x = app.screen.width / 2 + 15;
+    blink.y = app.screen.height / 2 - 14;
+    blink.width = app.screen.width * 0.32;
+    blink.height = blink.width * (blinkTexture.height / blinkTexture.width);
+
     const door = new Sprite(vaultTexture);
     door.anchor.set(0.5);
     door.x = app.screen.width / 2 + 15;
@@ -63,11 +69,27 @@ import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
   
 
     app.stage.addChild(background);
+    app.stage.addChild(blink);
     app.stage.addChild(door);
     app.stage.addChild(doorOpenShadow);
     app.stage.addChild(doorOpen);
     app.stage.addChild(handleShadow);
     app.stage.addChild(handle);
+
+    let pulse: number = 0;
+
+app.ticker.add((ticker: Ticker) => {
+    pulse += 0.05 * ticker.deltaTime;
+
+    const scaleFactor = 1 + 0.1 * Math.sin(pulse);
+    blink.scale.set(scaleFactor);
+
+    blink.position.set(
+        app.screen.width / 2 - 50 * scaleFactor,
+        app.screen.height / 2 - 15 * scaleFactor
+    );
+});
+
 
     //=======TESTING=======
     function resizeBackground() {
@@ -99,7 +121,7 @@ import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
       align: 'center',
     });
 
-    const timerText = new Text('30', timerStyle);
+    const timerText = new Text('10000000', timerStyle);
     timerText.anchor.set(0.5);
 timerText.x = app.screen.width / 3 - 45;  
 timerText.y = app.screen.height / 2 - 36;
@@ -170,6 +192,8 @@ function resizeGame() {
     background.x = (app.screen.width - background.width) / 2;
     background.y = (app.screen.height - background.height) / 2;
 
+    blink.scale.set(scaleFactor);
+    blink.position.set(app.screen.width / 2 - 50 * scaleFactor, app.screen.height / 2 - 30 * scaleFactor);
     
     door.scale.set(scaleFactor);
     door.position.set(app.screen.width / 2 + 57 * scaleFactor, app.screen.height / 2 - 44 * scaleFactor);
@@ -199,7 +223,9 @@ function resizeGame() {
 
 window.addEventListener('resize', resizeGame);
 resizeGame(); 
-
+ 
+   
+   
     doorOpen.visible = false;
     doorOpenShadow.visible = false;
 
@@ -247,11 +273,13 @@ resizeGame();
 
     let codeResetTimer: ReturnType<typeof setTimeout> | null = null;
 
+    
+
     function generateCombination(): CombinationStep[] {
         if (codeResetTimer) clearTimeout(codeResetTimer);
 
      
-        startTimer(30);
+        startTimer(100000000);
 
         codeResetTimer = setTimeout(() => {
 
@@ -261,7 +289,7 @@ resizeGame();
             currentStepCount = 0;
             currentDirection = null;
             unlocked = false;
-        }, 30000);
+        }, 100000000); // 1666 min
 
         const directionsPattern1: Direction[] = ['counterclockwise', 'clockwise', 'counterclockwise'];
         const directionsPattern2: Direction[] = ['clockwise', 'counterclockwise', 'clockwise'];
