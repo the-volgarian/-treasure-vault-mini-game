@@ -129,16 +129,22 @@ timerText.y = app.screen.height / 2 - 36;
 
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
+    function formatTime(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 function startTimer(seconds: number) {
     if (countdownInterval) clearInterval(countdownInterval);
 
     let timePassed = 0;
-    timerText.text = timePassed.toString();
+    timerText.text = formatTime(timePassed);
     timerText.visible = true;
 
     countdownInterval = setInterval(() => {
         timePassed++;
-        timerText.text = timePassed.toString();
+        timerText.text = formatTime(timePassed);
 
         if (timePassed >= seconds) {
             if (countdownInterval) clearInterval(countdownInterval);
