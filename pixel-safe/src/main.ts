@@ -1,4 +1,6 @@
-import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
+import { Application, Assets, Sprite, Ticker, Text, TextStyle} from 'pixi.js';
+import * as PIXI from 'pixi.js';
+
 
 (async () => {
     const app = new Application();
@@ -67,14 +69,13 @@ import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
     background.width = app.screen.width;
     background.height = app.screen.height;
   
+    function setupScene(sprites: { [key: string]: PIXI.Sprite }) {
+        for (const key in sprites) {
+            app.stage.addChild(sprites[key]);
+        }
+    }
 
-    app.stage.addChild(background);
-    app.stage.addChild(blink);
-    app.stage.addChild(door);
-    app.stage.addChild(doorOpenShadow);
-    app.stage.addChild(doorOpen);
-    app.stage.addChild(handleShadow);
-    app.stage.addChild(handle);
+    setupScene({background, blink, door, doorOpenShadow, doorOpen, handleShadow, handle})
 
     let pulse: number = 0;
 
@@ -90,8 +91,7 @@ app.ticker.add((ticker: Ticker) => {
     );
 });
 
-
-    //=======TESTING=======
+//=======TESTING=======
     function resizeBackground() {
       const bgRatio = background.texture.width / background.texture.height;
       const screenRatio = app.screen.width / app.screen.height;
@@ -108,10 +108,7 @@ app.ticker.add((ticker: Ticker) => {
       background.y = (app.screen.height - background.height) / 2;
     }
     //=======TESTING=======
-    
-    
-    
-    
+
 
     const timerStyle = new TextStyle({
       fontFamily: 'Arial',
