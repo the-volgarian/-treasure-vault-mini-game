@@ -91,25 +91,6 @@ app.ticker.add((ticker: Ticker) => {
     );
 });
 
-//=======TESTING=======
-    function resizeBackground() {
-      const bgRatio = background.texture.width / background.texture.height;
-      const screenRatio = app.screen.width / app.screen.height;
-
-      if (screenRatio > bgRatio) {
-        background.width = app.screen.width;
-        background.height = app.screen.width / bgRatio;
-      } else {
-        background.height = app.screen.height;
-        background.width = app.screen.height * bgRatio;
-      }
-
-      background.x = (app.screen.width - background.width) / 2;
-      background.y = (app.screen.height - background.height) / 2;
-    }
-    //=======TESTING=======
-
-
     const timerStyle = new TextStyle({
       fontFamily: 'Arial',
       fontSize: 55,
