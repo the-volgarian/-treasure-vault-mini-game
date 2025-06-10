@@ -89,7 +89,7 @@ app.ticker.add((ticker: Ticker) => {
         app.screen.width / 2 - 50 * scaleFactor,
         app.screen.height / 2 - 15 * scaleFactor
     );
-});
+    });
 
     const timerStyle = new TextStyle({
       fontFamily: 'Arial',
@@ -101,8 +101,8 @@ app.ticker.add((ticker: Ticker) => {
 
     const timerText = new Text('10000000', timerStyle);
     timerText.anchor.set(0.5);
-timerText.x = app.screen.width / 3 - 45;  
-timerText.y = app.screen.height / 2 - 36;
+    timerText.x = app.screen.width / 3 - 45;  
+    timerText.y = app.screen.height / 2 - 36;
     app.stage.addChild(timerText);
 
     let countdownInterval: ReturnType<typeof setInterval> | null = null;
@@ -111,9 +111,9 @@ timerText.y = app.screen.height / 2 - 36;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
+    }
 
-function startTimer(seconds: number) {
+    function startTimer(seconds: number) {
     if (countdownInterval) clearInterval(countdownInterval);
 
     let timePassed = 0;
@@ -265,15 +265,6 @@ resizeGame();
      
         startTimer(100000000);
 
-        codeResetTimer = setTimeout(() => {
-
-            console.log('%cTime is up! Generating a new code.', 'color: orange');
-            secretCombination = generateCombination();
-            inputSequence = [];
-            currentStepCount = 0;
-            currentDirection = null;
-            unlocked = false;
-        }, 100000000); // 1666 min
 
         const directionsPattern1: Direction[] = ['counterclockwise', 'clockwise', 'counterclockwise'];
         const directionsPattern2: Direction[] = ['clockwise', 'counterclockwise', 'clockwise'];
@@ -295,46 +286,26 @@ resizeGame();
     let currentDirection: Direction | null = null;
     let unlocked = false;
     let thirdStepTimer: ReturnType<typeof setTimeout> | null = null;
-    let idleTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    function resetIdleTimeout() {
-        if (idleTimeout) clearTimeout(idleTimeout);
-        idleTimeout = setTimeout(() => {
-            console.log('No rotation detected for 2 seconds — finalizing last step');
-            finalizeLastStepAndCheck();
-        }, 2000);
-    }
 
-    function addRotation(direction: Direction) {
-        console.log('%cTurned 60° ' + direction, 'color: lightblue');
 
-        if (unlocked) return;
+function addRotation(direction: 'clockwise' | 'counterclockwise') {
+    if (unlocked) return;
 
-        resetIdleTimeout();
-
-        if (direction !== currentDirection) {
-            if (inputSequence.length === 2) {
-                const firstDirection = secretCombination[0].direction;
-                const secondDirection = secretCombination[1].direction;
-
-                if (firstDirection === secondDirection && direction === firstDirection) {
-                    console.log('%cInvalid direction: cannot have 3 steps in same direction', 'color: orange');
-                    resetInput();
-                    return;
-                }
-            }
-
-            if (currentDirection && currentStepCount > 0) {
-                inputSequence.push({ number: currentStepCount, direction: currentDirection });
-                console.log('Step added:', { number: currentStepCount, direction: currentDirection });
-            }
-
-            currentDirection = direction;
-            currentStepCount = 1;
-        } else {
-            currentStepCount++;
+    if (currentDirection === null || currentDirection !== direction) {
+        if (currentDirection !== null) {
+            inputSequence.push({ number: currentStepCount, direction: currentDirection });
+            console.log('Added step:', { number: currentStepCount, direction: currentDirection });
         }
+
+        currentDirection = direction;
+        currentStepCount = 1;
+    } else {
+        currentStepCount++;
     }
+
+    checkCombination();
+}
 
     function resetInput() {
         console.log('%cResetting input due to invalid direction sequence.', 'color: red');
@@ -344,17 +315,6 @@ resizeGame();
         if (thirdStepTimer) {
             clearTimeout(thirdStepTimer);
             thirdStepTimer = null;
-        }
-    }
-
-    function finalizeLastStepAndCheck() {
-        if (unlocked) return;
-
-        if (currentDirection && currentStepCount > 0 && inputSequence.length === 2) {
-            inputSequence.push({ number: currentStepCount, direction: currentDirection });
-            console.log('Final step added:', { number: currentStepCount, direction: currentDirection });
-
-            checkCombination();
         }
     }
 
@@ -391,77 +351,96 @@ resizeGame();
         app.ticker.add(spin);
     }
 
-    function checkCombination() {
+function checkCombination() {
     if (unlocked) return;
 
-    console.log('%cEntered combination:', 'color: cyan', inputSequence);
+    if (inputSequence.length === 0 && currentDirection === null) return;
+
+    const tempSequence = [...inputSequence];
+    if (currentDirection !== null && currentStepCount > 0) {
+        tempSequence.push({ number: currentStepCount, direction: currentDirection });
+    }
+
+    console.log('%cEntered combination:', 'color: cyan', tempSequence);
     console.log('%cExpected combination:', 'color: yellow', secretCombination);
 
-    const match = inputSequence.every((step, i) =>
-        step.number === secretCombination[i].number &&
-        step.direction === secretCombination[i].direction
-    );
+    for (let i = 0; i < tempSequence.length; i++) {
+        const enteredStep = tempSequence[i];
+        const expectedStep = secretCombination[i];
 
-    if (match) {
-        console.log('%cUnlocked! 🎉', 'color: lime');
-        unlocked = true;
-        door.visible = false;
-        handle.visible = false;
-        handleShadow.visible = false;
-        doorOpen.visible = true;
-        doorOpenShadow.visible = true;
+        if (
+            !expectedStep || 
+            enteredStep.number > expectedStep.number || 
+            enteredStep.direction !== expectedStep.direction
+        ) {
+            console.log('%cInvalid prefix detected, resetting...', 'color: red');
+            resetInput();
+            spinHandleAndReset();
+            return;
+        }
+    }
 
-        setTimeout(() => {
-           
-            doorOpen.visible = false;
-            doorOpenShadow.visible = false;
+    if (tempSequence.length === secretCombination.length) {
+        const isExactMatch = tempSequence.every((step, i) =>
+            step.number === secretCombination[i].number &&
+            step.direction === secretCombination[i].direction
+        );
 
-            
-            door.visible = true;
-            handle.visible = true;
-            handleShadow.visible = true;
+        if (isExactMatch) {
+            console.log('%cUnlocked! 🎉', 'color: lime');
+            unlocked = true;
 
-            
-            let rotation = 0;
-            const fullRotation = Math.PI * 2;  
-            const speed = 0.15;
+            door.visible = false;
+            handle.visible = false;
+            handleShadow.visible = false;
+            doorOpen.visible = true;
+            doorOpenShadow.visible = true;
 
-            const rotateHandle = (ticker: Ticker) => {
-                const step = speed * ticker.deltaTime;
-                rotation += step;
+            setTimeout(() => {
+                doorOpen.visible = false;
+                doorOpenShadow.visible = false;
 
-                handle.rotation += step;
-                handleShadow.rotation += step;
+                door.visible = true;
+                handle.visible = true;
+                handleShadow.visible = true;
 
-                if (rotation >= fullRotation) {
-                    app.ticker.remove(rotateHandle);
+                let rotation = 0;
+                const fullRotation = Math.PI * 2;
+                const speed = 0.15;
 
-                    
-                    unlocked = false;
-                    inputSequence = [];
-                    currentDirection = null;
-                    currentStepCount = 0;
+                const rotateHandle = (ticker: Ticker) => {
+                    const step = speed * ticker.deltaTime;
+                    rotation += step;
 
-                    secretCombination = generateCombination();
+                    handle.rotation += step;
+                    handleShadow.rotation += step;
 
-                    if (codeResetTimer) {
-                        clearTimeout(codeResetTimer);
-                        codeResetTimer = null;
+                    if (rotation >= fullRotation) {
+                        app.ticker.remove(rotateHandle);
+
+                        unlocked = false;
+                        inputSequence = [];
+                        currentDirection = null;
+                        currentStepCount = 0;
+
+                        secretCombination = generateCombination();
+
+                        if (codeResetTimer) {
+                            clearTimeout(codeResetTimer);
+                            codeResetTimer = null;
+                        }
                     }
-                }
-            };
+                };
 
-            app.ticker.add(rotateHandle);
+                app.ticker.add(rotateHandle);
 
-        }, 5000);
+            }, 5000);
 
-        
-        timerText.visible = false;
-        if (countdownInterval) clearInterval(countdownInterval);
-    } else {
-        console.log('%cWrong combination. Spinning left and resetting...', 'color: red');
-        spinHandleAndReset();
+            timerText.visible = false;
+            if (countdownInterval) clearInterval(countdownInterval);
+        }
     }
 }
+
 
 })();
