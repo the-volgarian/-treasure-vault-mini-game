@@ -1,5 +1,7 @@
 import { Application, Assets, Sprite, Ticker, Text, TextStyle} from 'pixi.js';
 import * as PIXI from 'pixi.js';
+import gsap from 'gsap';
+
 
 
 (async () => {
@@ -77,19 +79,16 @@ import * as PIXI from 'pixi.js';
 
     setupScene({background, blink, door, doorOpenShadow, doorOpen, handleShadow, handle})
 
-    let pulse: number = 0;
 
-app.ticker.add((ticker: Ticker) => {
-    pulse += 0.05 * ticker.deltaTime;
-
-    const scaleFactor = 1 + 0.1 * Math.sin(pulse);
-    blink.scale.set(scaleFactor);
-
-    blink.position.set(
-        app.screen.width / 2 - 50 * scaleFactor,
-        app.screen.height / 2 - 15 * scaleFactor
-    );
+    gsap.to(blink.scale, {
+        x: 1.1,
+        y: 1.1,
+        duration: 0.8,
+        ease: "sine.inOut",
+        yoyo: true,
+        repeat: -1
     });
+
 
     const timerStyle = new TextStyle({
       fontFamily: 'Arial',
@@ -176,6 +175,7 @@ function resizeGame() {
     background.x = (app.screen.width - background.width) / 2;
     background.y = (app.screen.height - background.height) / 2;
 
+
     blink.scale.set(scaleFactor);
     blink.position.set(app.screen.width / 2 - 50 * scaleFactor, app.screen.height / 2 - 30 * scaleFactor);
     
@@ -195,7 +195,7 @@ function resizeGame() {
     handleShadow.scale.set(handleScale);
     handleShadow.position.set(app.screen.width / 2 - 33 * scaleFactor, app.screen.height / 2 + 5 * scaleFactor);
 
-    timerText
+    
     timerText.scale.set(scaleFactor);
     timerText.position.set(app.screen.width / 2 - 1180 * scaleFactor, app.screen.height / 2 - 145 * scaleFactor);
 
@@ -219,34 +219,34 @@ resizeGame();
     let isRotating = false;
 
     handle.on('pointerdown', (event) => {
-        if (isRotating) return;
+    if (isRotating) return;
 
-        const clickPos = event.data.global;
-        const direction = clickPos.x > handle.x ? 1 : -1;
-        const rotationTarget = (Math.PI / 3) * direction;
+    const clickPos = event.data.global;
+    const direction = clickPos.x > handle.x ? 1 : -1;
+    const rotationTarget = (Math.PI / 3) * direction;
 
-        isRotating = true;
-        let rotated = 0;
+    isRotating = true;
+    let rotated = 0;
 
-        const rotate = (ticker: Ticker) => {
-            const step = 0.05 * ticker.deltaTime * direction;
-            if (Math.abs(rotated + step) >= Math.abs(rotationTarget)) {
-                const remaining = rotationTarget - rotated;
-                handle.rotation += remaining;
-                handleShadow.rotation += remaining;
-                app.ticker.remove(rotate);
-                isRotating = false;
+    function rotate(ticker: Ticker) {
+        const step = 0.05 * ticker.deltaTime * direction;
+        if (Math.abs(rotated + step) >= Math.abs(rotationTarget)) {
+            const remaining = rotationTarget - rotated;
+            handle.rotation += remaining;
+            handleShadow.rotation += remaining;
+            app.ticker.remove(rotate);
+            isRotating = false;
 
-                addRotation(direction === 1 ? 'clockwise' : 'counterclockwise');
-                return;
-            }
-            handle.rotation += step;
-            handleShadow.rotation += step;
-            rotated += step;
-        };
+            addRotation(direction === 1 ? 'clockwise' : 'counterclockwise');
+            return;
+        }
+        handle.rotation += step;
+        handleShadow.rotation += step;
+        rotated += step;
+    }
 
-        app.ticker.add(rotate);
-    });
+    app.ticker.add(rotate);
+});
 
     type Direction = 'clockwise' | 'counterclockwise';
 
@@ -318,38 +318,30 @@ function addRotation(direction: 'clockwise' | 'counterclockwise') {
         }
     }
 
-    function spinHandleAndReset() {
-        let rotation = 0;
-        const fullRotation = -Math.PI * 2;
-        const speed = 0.2;
+function spinHandleAndReset() {
+    const targetRotation = handle.rotation - Math.PI * 2;
 
-        const spin = (ticker: Ticker) => {
-            const step = speed * ticker.deltaTime;
-            if (rotation - step <= fullRotation) {
-                const remaining = fullRotation - rotation;
-                handle.rotation += remaining;
-                handleShadow.rotation += remaining;
-                app.ticker.remove(spin);
+    gsap.to(handle, {
+        rotation: targetRotation,
+        duration: 1,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+            handleShadow.rotation = handle.rotation;
+        },
+        onComplete: () => {
+            secretCombination = generateCombination();
+            inputSequence = [];
+            currentDirection = null;
+            currentStepCount = 0;
+            unlocked = false;
 
-                secretCombination = generateCombination();
-                inputSequence = [];
-                currentDirection = null;
-                currentStepCount = 0;
-                unlocked = false;
+            door.visible = true;
+            doorOpen.visible = false;
+            doorOpenShadow.visible = false;
+        }
+    });
+}
 
-                door.visible = true;
-                doorOpen.visible = false;
-                doorOpenShadow.visible = false;
-
-                return;
-            }
-            handle.rotation -= step;
-            handleShadow.rotation -= step;
-            rotation -= step;
-        };
-
-        app.ticker.add(spin);
-    }
 
 function checkCombination() {
     if (unlocked) return;
@@ -387,16 +379,22 @@ function checkCombination() {
         );
 
         if (isExactMatch) {
-            console.log('%cUnlocked! 🎉', 'color: lime');
-            unlocked = true;
+    unlocked = true;
 
-            door.visible = false;
-            handle.visible = false;
-            handleShadow.visible = false;
-            doorOpen.visible = true;
-            doorOpenShadow.visible = true;
+    gsap.to([door, handle, handleShadow], { alpha: 0, duration: 0.3 });
 
-            setTimeout(() => {
+    doorOpen.alpha = 0;
+    doorOpenShadow.alpha = 0;
+    doorOpen.visible = true;
+    doorOpenShadow.visible = true;
+
+    gsap.to([doorOpen, doorOpenShadow], { alpha: 1, duration: 0.3 });
+
+    setTimeout(() => {
+        gsap.to([doorOpen, doorOpenShadow], {
+            alpha: 0,
+            duration: 0.3,
+            onComplete: () => {
                 doorOpen.visible = false;
                 doorOpenShadow.visible = false;
 
@@ -404,38 +402,26 @@ function checkCombination() {
                 handle.visible = true;
                 handleShadow.visible = true;
 
-                let rotation = 0;
-                const fullRotation = Math.PI * 2;
-                const speed = 0.15;
+                gsap.to([door, handle, handleShadow], { alpha: 1, duration: 0.3 });
 
-                const rotateHandle = (ticker: Ticker) => {
-                    const step = speed * ticker.deltaTime;
-                    rotation += step;
-
-                    handle.rotation += step;
-                    handleShadow.rotation += step;
-
-                    if (rotation >= fullRotation) {
-                        app.ticker.remove(rotateHandle);
-
-                        unlocked = false;
-                        inputSequence = [];
-                        currentDirection = null;
-                        currentStepCount = 0;
-
-                        secretCombination = generateCombination();
-
-                        if (codeResetTimer) {
-                            clearTimeout(codeResetTimer);
-                            codeResetTimer = null;
+                gsap.fromTo(handle, 
+                    { rotation: 0 }, 
+                    { 
+                        rotation: Math.PI * 2, 
+                        duration: 1, 
+                        ease: 'power1.out',
+                        onUpdate: () => { handleShadow.rotation = handle.rotation },
+                        onComplete: () => {
+                            unlocked = false;
+                            inputSequence = [];
+                            currentDirection = null;
+                            currentStepCount = 0;
+                            secretCombination = generateCombination();
                         }
-                    }
-                };
-
-                app.ticker.add(rotateHandle);
-
-            }, 5000);
-
+                    });
+            }
+        });
+    }, 5000);
             timerText.visible = false;
             if (countdownInterval) clearInterval(countdownInterval);
         }
