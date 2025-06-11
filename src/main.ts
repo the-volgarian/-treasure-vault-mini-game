@@ -259,26 +259,30 @@ async function startGame () {
 
         
 
-        function generateCombination(): CombinationStep[] {
-            if (codeResetTimer) clearTimeout(codeResetTimer);
+const COMBINATION_LENGTH = 4;
+const POSSIBLE_DIRECTIONS: Direction[] = ['clockwise', 'counterclockwise'];
 
-        
-            startTimer(100000000);
+function generateCombination(): CombinationStep[] {
+    if (codeResetTimer) clearTimeout(codeResetTimer);
 
+    startTimer(100000000);
 
-            const directionsPattern1: Direction[] = ['counterclockwise', 'clockwise', 'counterclockwise'];
-            const directionsPattern2: Direction[] = ['clockwise', 'counterclockwise', 'clockwise'];
-            const chosenPattern = Math.random() < 0.5 ? directionsPattern1 : directionsPattern2;
+    const combination: CombinationStep[] = [];
+    
 
-            const combination: CombinationStep[] = [];
-            for (let i = 0; i < 3; i++) {
-                const number = Math.floor(Math.random() * 9) + 1;
-                combination.push({ number, direction: chosenPattern[i] });
-            }
+    let currentDirection: Direction = Math.random() < 0.5 ? POSSIBLE_DIRECTIONS[0] : POSSIBLE_DIRECTIONS[1];
 
-            console.log('%cSecret combination:', 'color: blue', combination);
-            return combination;
-        }
+    for (let i = 0; i < COMBINATION_LENGTH; i++) {
+        const number = Math.floor(Math.random() * 9) + 1; 
+        combination.push({ number, direction: currentDirection });
+
+        currentDirection = currentDirection === POSSIBLE_DIRECTIONS[0] ? POSSIBLE_DIRECTIONS[1] : POSSIBLE_DIRECTIONS[0];
+    }
+
+    console.log('%cSecret combination:', 'color: blue', combination);
+    return combination;
+}
+
 
         let secretCombination = generateCombination();
         let inputSequence: CombinationStep[] = [];
