@@ -2,6 +2,7 @@ import { Application, Ticker, Text, TextStyle } from 'pixi.js';
 import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
 import { setupSprites } from './setupSprites';
+import { initTimer, startTimer } from './timer';
 
 
 async function startGame(): Promise<void> {
@@ -29,39 +30,10 @@ async function startGame(): Promise<void> {
     repeat: -1
   });
 
-  const timerText = new Text('00:00', new TextStyle({ fontFamily: 'Arial', fontSize: 55, fill: '#ff0000', stroke: '#000000', align: 'center' }));
-  timerText.anchor.set(0.5);
-  timerText.x = app.screen.width / 3 - 45;
-  timerText.y = app.screen.height / 2 - 36;
-  app.stage.addChild(timerText);
+  
+  const timerText = initTimer(app);
 
-  let countdownInterval: ReturnType<typeof setInterval> | null = null;
-  const formatTime = (seconds: number): string => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
-    function startTimer(seconds: number): void {
-    let timePassed = 0;
-    timerText.text = formatTime(timePassed);
-    timerText.visible = true;
-
-    app.ticker.add(tick);
-
-    function tick(): void {
-      const delta = app.ticker.deltaMS / 1000;
-      timePassed += delta;
-
-      timerText.text = formatTime(Math.floor(timePassed));
-
-      if (Math.floor(timePassed) >= seconds) {
-        timerText.visible = false;
-        secretCombination = generateCombination();
-        inputSequence = [];
-        currentStepCount = 0;
-        currentDirection = null;
-        unlocked = false;
-        app.ticker.remove(tick);
-      }
-    }
-  }
 
     function resizeGame() {
         app.renderer.resize(window.innerWidth, window.innerHeight);
@@ -139,7 +111,13 @@ async function startGame(): Promise<void> {
   let unlocked = false;
 
   function generateCombination(): CombinationStep[] {
-    startTimer(100000000);
+      startTimer(app, timerText, () => {
+      secretCombination = generateCombination();
+      inputSequence = [];
+      currentStepCount = 0;
+      currentDirection = null;
+      unlocked = false;
+    });
     const combination: CombinationStep[] = [];
     let direction: Direction = Math.random() < 0.5 ? 'clockwise' : 'counterclockwise';
     for (let i = 0; i < COMBINATION_LENGTH; i++) {
@@ -207,9 +185,8 @@ async function startGame(): Promise<void> {
       doorOpen.visible = true;
       doorOpenShadow.visible = true;
       gsap.to([doorOpen, doorOpenShadow], { alpha: 1, duration: 0.3 });
-      ///// setTimeout Block /////
       let delayPassed = 0;
-      const delayDuration = 5; // seconds
+      const delayDuration = 5;
 
       const delayTicker = (ticker: Ticker): void => {
         delayPassed += ticker.deltaMS / 1000;
@@ -242,9 +219,7 @@ async function startGame(): Promise<void> {
         }
       };
       app.ticker.add(delayTicker);
-      /////
       timerText.visible = false;
-      if (countdownInterval) if (countdownInterval !== null) clearInterval(countdownInterval);
     }
   }
 
