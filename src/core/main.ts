@@ -1,11 +1,12 @@
-import { Application, Ticker, Text, TextStyle } from 'pixi.js';
+import { Application} from 'pixi.js';
 import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
 import { setupSprites } from '../ui/setupSprites';
 import { initTimer, startTimer } from '../ui/timer';
-import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFactory } from '../logic/combination';
+import { generateCombination, checkCombinationFactory } from '../logic/combination';
 import { setupResize } from '../ui/resize';
 import { createAddRotation, setupHandleInteraction } from '../logic/rotation';
+import type { State } from '../logic/combination';
 
 const BLINK_SCALE_X = 1.1;
 const BLINK_SCALE_Y = 1.1;
@@ -46,14 +47,6 @@ async function startGame(): Promise<void> {
   interface CombinationStep {
     number: number;
     direction: Direction;
-  }
-
-  interface State {
-    secretCombination: CombinationStep[];
-    inputSequence: CombinationStep[];
-    currentStepCount: number;
-    currentDirection: Direction | null;
-    unlocked: boolean;
   }
 
   let secretCombination: CombinationStep[] = [];
