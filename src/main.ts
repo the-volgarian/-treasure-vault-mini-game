@@ -3,6 +3,7 @@ import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
 import { setupSprites } from './setupSprites';
 import { initTimer, startTimer } from './timer';
+import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFactory } from './combination';
 
 
 async function startGame(): Promise<void> {
@@ -110,48 +111,62 @@ async function startGame(): Promise<void> {
   let currentDirection: Direction | null = null;
   let unlocked = false;
 
-  function generateCombination(): CombinationStep[] {
-      startTimer(app, timerText, () => {
-      secretCombination = generateCombination();
-      inputSequence = [];
-      currentStepCount = 0;
-      currentDirection = null;
-      unlocked = false;
-    });
-    const combination: CombinationStep[] = [];
-    let direction: Direction = Math.random() < 0.5 ? 'clockwise' : 'counterclockwise';
-    for (let i = 0; i < COMBINATION_LENGTH; i++) {
-      const number = Math.floor(Math.random() * 9) + 1;
-      combination.push({ number, direction });
-      direction = direction === 'clockwise' ? 'counterclockwise' : 'clockwise';
-    }
-    console.log('%cSecret combination:', 'color: blue', combination);
-    return combination;
-  }
-  secretCombination = generateCombination();
+  type CombinationContext = {
+  app: Application;
+  gsap: typeof gsap;
+  timerText: PIXI.Text;
+  handle: PIXI.Sprite;
+  handleShadow: PIXI.Sprite;
+  door: PIXI.Sprite;
+  doorOpen: PIXI.Sprite;
+  doorOpenShadow: PIXI.Sprite;
+  getState: () => {
+    secretCombination: CombinationStep[];
+    inputSequence: CombinationStep[];
+    currentStepCount: number;
+    currentDirection: Direction | null;
+    unlocked: boolean;
+  };
+  setState: (newState: {
+    secretCombination: CombinationStep[];
+    inputSequence: CombinationStep[];
+    currentStepCount: number;
+    currentDirection: Direction | null;
+    unlocked: boolean;
+  }) => void;
+};
 
-  function resetInput(): void {
-    inputSequence = [];
-    currentDirection = null;
-    currentStepCount = 0;
+const combinationContext: CombinationContext = {
+  app,
+  gsap,
+  timerText,
+  handle,
+  handleShadow,
+  door,
+  doorOpen,
+  doorOpenShadow,
+  getState: () => ({
+    secretCombination,
+    inputSequence,
+    currentStepCount,
+    currentDirection,
+    unlocked
+  }),
+  setState: (newState) => {
+    secretCombination = newState.secretCombination;
+    inputSequence = newState.inputSequence;
+    currentStepCount = newState.currentStepCount;
+    currentDirection = newState.currentDirection;
+    unlocked = newState.unlocked;
   }
+};
 
-  function spinHandleAndReset(): void {
-    const target = handle.rotation - Math.PI * 2;
-    gsap.to(handle, {
-      rotation: target,
-      duration: 1,
-      onUpdate: () => { handleShadow.rotation = handle.rotation; },
-      onComplete: () => {
-        secretCombination = generateCombination();
-        resetInput();
-        unlocked = false;
-        door.visible = true;
-        doorOpen.visible = false;
-        doorOpenShadow.visible = false;
-      }
-    });
-  }
+secretCombination = generateCombination(combinationContext);
+startTimer(app, timerText, () => {
+  secretCombination = generateCombination(combinationContext);
+});
+
+
 
   function addRotation(direction: Direction): void {
     if (unlocked) return;
@@ -165,63 +180,32 @@ async function startGame(): Promise<void> {
     checkCombination();
   }
 
-  function checkCombination(): void {
-    if (unlocked) return;
-    const temp: CombinationStep[] = [...inputSequence];
-    if (currentDirection && currentStepCount > 0) temp.push({ number: currentStepCount, direction: currentDirection });
-    for (let i = 0; i < temp.length; i++) {
-      const entered = temp[i], expected = secretCombination[i];
-      if (!expected || entered.number > expected.number || entered.direction !== expected.direction) {
-        resetInput();
-        spinHandleAndReset();
-        return;
-      }
+  const checkCombination = checkCombinationFactory({
+    app,
+    gsap,
+    timerText,
+    handle,
+    handleShadow,
+    door,
+    doorOpen,
+    doorOpenShadow,
+    getState: () => ({
+      secretCombination,
+      inputSequence,
+      currentStepCount,
+      currentDirection,
+      unlocked
+    }),
+    setState: (newState) => {
+      secretCombination = newState.secretCombination;
+      inputSequence = newState.inputSequence;
+      currentStepCount = newState.currentStepCount;
+      currentDirection = newState.currentDirection;
+      unlocked = newState.unlocked;
     }
-    if (temp.length === secretCombination.length && temp.every((s, i) => s.number === secretCombination[i].number && s.direction === secretCombination[i].direction)) {
-      unlocked = true;
-      gsap.to([door, handle, handleShadow], { alpha: 0, duration: 0.3 });
-      doorOpen.alpha = 0;
-      doorOpenShadow.alpha = 0;
-      doorOpen.visible = true;
-      doorOpenShadow.visible = true;
-      gsap.to([doorOpen, doorOpenShadow], { alpha: 1, duration: 0.3 });
-      let delayPassed = 0;
-      const delayDuration = 5;
+  });
 
-      const delayTicker = (ticker: Ticker): void => {
-        delayPassed += ticker.deltaMS / 1000;
-        if (delayPassed >= delayDuration) {
-          app.ticker.remove(delayTicker);
-
-          gsap.to([doorOpen, doorOpenShadow], {
-            alpha: 0,
-            duration: 0.3,
-            onComplete: () => {
-              doorOpen.visible = false;
-              doorOpenShadow.visible = false;
-              door.visible = true;
-              handle.visible = true;
-              handleShadow.visible = true;
-              gsap.to([door, handle, handleShadow], { alpha: 1, duration: 0.3 });
-              gsap.fromTo(handle, { rotation: 0 }, {
-                rotation: Math.PI * 2,
-                duration: 1,
-                ease: 'power1.out',
-                onUpdate: () =>{handleShadow.rotation = handle.rotation},
-                onComplete: () => {
-                  unlocked = false;
-                  resetInput();
-                  secretCombination = generateCombination();
-                }
-              });
-            }
-          });
-        }
-      };
-      app.ticker.add(delayTicker);
-      timerText.visible = false;
-    }
-  }
+  
 
   handle.eventMode = 'static';
   handle.cursor = 'pointer';
