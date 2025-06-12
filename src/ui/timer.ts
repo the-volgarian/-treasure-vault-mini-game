@@ -13,13 +13,16 @@ type TimerController = {
 };
 
 export function initTimer(app: Application): Text {
-  const timerText = new Text('00:00', new TextStyle({
-    fontFamily: 'Arial',
-    fontSize: TIMER_FONT_SIZE,
-    fill: TIMER_FILL_COLOR,
-    stroke: TIMER_STROKE_COLOR,
-    align: 'center',
-  }));
+  const timerText = new Text({
+    text: '00:00',
+    style: new TextStyle({
+      fontFamily: 'Arial',
+      fontSize: TIMER_FONT_SIZE,
+      fill: TIMER_FILL_COLOR,
+      stroke: TIMER_STROKE_COLOR,
+      align: 'center',
+    }),
+  });
 
   timerText.anchor.set(0.5);
   timerText.x = app.screen.width / 3 - TIMER_X_OFFSET;
