@@ -31,7 +31,7 @@ export interface CombinationContext {
 }
 
 const ROTATION_FULL = Math.PI * 2;
-const COMBINATION_LENGTH = 4;
+const COMBINATION_LENGTH = 3;
 const MAX_COMBINATION_STEP = 9;
 const COMBINATION_MIN_STEP = 1;
 const DOOR_ANIMATION_DURATION = 0.3;
