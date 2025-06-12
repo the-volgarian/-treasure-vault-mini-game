@@ -40,3 +40,48 @@ export function setupHandleInteraction(
     app.ticker.add(rotate);
   });
 }
+
+export function createAddRotation(
+  getState: () => {
+    secretCombination: { number: number; direction: Direction }[];
+    inputSequence: { number: number; direction: Direction }[];
+    currentStepCount: number;
+    currentDirection: Direction | null;
+    unlocked: boolean;
+  },
+  setState: (state: {
+    secretCombination: { number: number; direction: Direction }[];
+    inputSequence: { number: number; direction: Direction }[];
+    currentStepCount: number;
+    currentDirection: Direction | null;
+    unlocked: boolean;
+  }) => void,
+  checkCombination: () => void
+): (direction: Direction) => void {
+  return (direction: Direction): void => {
+    const state = getState();
+    if (state.unlocked) return;
+
+    const inputSequence = [...state.inputSequence];
+    let { currentDirection, currentStepCount } = state;
+
+    if (!currentDirection || currentDirection !== direction) {
+      if (currentDirection)
+        inputSequence.push({ number: currentStepCount, direction: currentDirection });
+      currentDirection = direction;
+      currentStepCount = 1;
+    } else {
+      currentStepCount++;
+    }
+
+    setState({
+      ...state,
+      inputSequence,
+      currentDirection,
+      currentStepCount
+    });
+
+    checkCombination();
+  };
+}
+

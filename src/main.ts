@@ -5,7 +5,7 @@ import { setupSprites } from './setupSprites';
 import { initTimer, startTimer } from './timer';
 import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFactory } from './combination';
 import { setupResize } from './resize';
-import { setupHandleInteraction } from './rotation';
+import { createAddRotation, setupHandleInteraction } from './rotation';
 
 
 async function startGame(): Promise<void> {
@@ -110,17 +110,7 @@ startTimer(app, timerText, () => {
 
 
 
-  function addRotation(direction: Direction): void {
-    if (unlocked) return;
-    if (!currentDirection || currentDirection !== direction) {
-      if (currentDirection) inputSequence.push({ number: currentStepCount, direction: currentDirection });
-      currentDirection = direction;
-      currentStepCount = 1;
-    } else {
-      currentStepCount++;
-    }
-    checkCombination();
-  }
+  
 
   const checkCombination = checkCombinationFactory({
     app,
@@ -146,6 +136,12 @@ startTimer(app, timerText, () => {
       unlocked = newState.unlocked;
     }
   });
+
+const addRotation = createAddRotation(
+  combinationContext.getState,
+  combinationContext.setState,
+  checkCombination
+);
 
   
 
