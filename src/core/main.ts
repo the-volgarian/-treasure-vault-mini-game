@@ -1,11 +1,11 @@
 import { Application, Ticker, Text, TextStyle } from 'pixi.js';
 import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
-import { setupSprites } from './setupSprites';
-import { initTimer, startTimer } from './timer';
-import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFactory } from './combination';
-import { setupResize } from './resize';
-import { createAddRotation, setupHandleInteraction } from './rotation';
+import { setupSprites } from '../ui/setupSprites';
+import { initTimer, startTimer } from '../ui/timer';
+import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFactory } from '../logic/combination';
+import { setupResize } from '../ui/resize';
+import { createAddRotation, setupHandleInteraction } from '../logic/rotation';
 
 const BLINK_SCALE_X = 1.1;
 const BLINK_SCALE_Y = 1.1;

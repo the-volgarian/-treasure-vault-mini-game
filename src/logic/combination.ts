@@ -128,6 +128,10 @@ export function checkCombinationFactory(ctx: CombinationContext) {
   };
 }
 
+export function resetInput(): void {
+  
+}
+
 export function spinHandleAndReset(ctx: CombinationContext): void {
   const target = ctx.handle.rotation - ROTATION_FULL;
 
