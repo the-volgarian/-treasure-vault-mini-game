@@ -1,6 +1,5 @@
 import { Application, Sprite, Text } from 'pixi.js';
 
-// Constants for layout and scaling
 const MOBILE_BREAKPOINT = 768;
 const BLINK_OFFSET_X = -50;
 const BLINK_OFFSET_Y = -30;
@@ -32,11 +31,11 @@ export function setupResize(
   function resizeGame(): void {
     app.renderer.resize(window.innerWidth, window.innerHeight);
 
-    const originalBgWidth = background.texture.width;
-    const originalBgHeight = background.texture.height;
+    const originalBgWidth: number = background.texture.width;
+    const originalBgHeight: number = background.texture.height;
 
-    const screenRatio = app.screen.width / app.screen.height;
-    const bgRatio = originalBgWidth / originalBgHeight;
+    const screenRatio: number = app.screen.width / app.screen.height;
+    const bgRatio: number = originalBgWidth / originalBgHeight;
 
     let scaleFactor: number;
 
@@ -46,7 +45,7 @@ export function setupResize(
       scaleFactor = app.screen.height / originalBgHeight;
     }
 
-    const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+    const isMobile: boolean = window.innerWidth < MOBILE_BREAKPOINT;
     if (isMobile) {
       console.log('mobile view active');
       scaleFactor *= MOBILE_SCALE_REDUCTION;
@@ -71,7 +70,7 @@ export function setupResize(
     doorOpenShadow.scale.set(scaleFactor);
     doorOpenShadow.position.set(app.screen.width / 2 + DOOR_OPEN_SHADOW_OFFSET_X * scaleFactor, app.screen.height / 2 + DOOR_OPEN_SHADOW_OFFSET_Y * scaleFactor);
 
-    const handleScale = scaleFactor * HANDLE_SCALE_MULTIPLIER;
+    const handleScale: number = scaleFactor * HANDLE_SCALE_MULTIPLIER;
     handle.scale.set(handleScale);
     handle.position.set(app.screen.width / 2 + HANDLE_OFFSET_X * scaleFactor, app.screen.height / 2 + HANDLE_OFFSET_Y * scaleFactor);
 
@@ -85,3 +84,5 @@ export function setupResize(
   window.addEventListener('resize', resizeGame);
   resizeGame();
 }
+
+

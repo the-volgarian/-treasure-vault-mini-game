@@ -5,7 +5,12 @@ const TIMER_FILL_COLOR = '#ff0000';
 const TIMER_STROKE_COLOR = '#000000';
 const TIMER_X_OFFSET = 45;
 const TIMER_Y_OFFSET = 36;
-const TIMER_DURATION_SECONDS = 100000000;
+export const TIMER_DURATION_SECONDS = 100000000;
+
+type TimerController = {
+  stop: () => void;
+  getTime: () => number;
+};
 
 export function initTimer(app: Application): Text {
   const timerText = new Text('00:00', new TextStyle({
@@ -24,18 +29,22 @@ export function initTimer(app: Application): Text {
   return timerText;
 }
 
-export function startTimer(app: Application, timerText: Text, onTimeout: () => void): void {
+export function startTimer(
+  app: Application, 
+  timerText: Text, 
+  onTimeout: () => void,
+  durationSeconds: number = TIMER_DURATION_SECONDS
+): TimerController {
   let timePassed = 0;
-  timerText.text = formatTime(timePassed);
+  timerText.text = formatTime(0);
   timerText.visible = true;
 
   const tick = (): void => {
     const delta = app.ticker.deltaMS / 1000;
     timePassed += delta;
-
     timerText.text = formatTime(Math.floor(timePassed));
 
-    if (Math.floor(timePassed) >= TIMER_DURATION_SECONDS) {
+    if (Math.floor(timePassed) >= durationSeconds) {
       timerText.visible = false;
       app.ticker.remove(tick);
       onTimeout();
@@ -43,6 +52,11 @@ export function startTimer(app: Application, timerText: Text, onTimeout: () => v
   };
 
   app.ticker.add(tick);
+
+  return {
+    stop: () => app.ticker.remove(tick),
+    getTime: () => Math.floor(timePassed)
+  };
 }
 
 function formatTime(seconds: number): string {

@@ -1,10 +1,21 @@
-import { Application, Ticker, FederatedPointerEvent, Sprite } from 'pixi.js';
+import { Application, FederatedPointerEvent, Sprite, Ticker, Point } from 'pixi.js';
 
+const ROTATION_ANGLE: number = Math.PI / 3;
+const ROTATION_SPEED: number = 0.05;
 
-const ROTATION_ANGLE = Math.PI / 3;
-const ROTATION_SPEED = 0.05;
+export type Direction = 'clockwise' | 'counterclockwise';
 
-type Direction = 'clockwise' | 'counterclockwise';
+export interface CombinationStep {
+  number: number;
+  direction: Direction;
+}
+
+export interface CombinationState {
+  inputSequence: CombinationStep[];
+  currentStepCount: number;
+  currentDirection: Direction | null;
+  unlocked: boolean;
+}
 
 export function setupHandleInteraction(
   app: Application,
@@ -12,64 +23,63 @@ export function setupHandleInteraction(
   handleShadow: Sprite,
   addRotation: (direction: Direction) => void
 ): void {
-  let isRotating = false;
+  let isRotating: boolean = false;
 
   handle.eventMode = 'static';
   handle.cursor = 'pointer';
 
   handle.on('pointerdown', (event: FederatedPointerEvent): void => {
     if (isRotating) return;
-    const clickPos = event.data.global;
-    const direction = clickPos.x > handle.x ? 1 : -1;
-    const target = ROTATION_ANGLE * direction;
-    isRotating = true;
-    let rotated = 0;
 
-    const rotate = (ticker: Ticker): void => {
-      const step = ROTATION_SPEED * ticker.deltaTime * direction;
-      if (Math.abs(rotated + step) >= Math.abs(target)) {
-        const remaining = target - rotated;
-        handle.rotation += remaining;
-        handleShadow.rotation += remaining;
-        app.ticker.remove(rotate);
+    const clickPos: Point = event.global;
+    const dirMultiplier: number = clickPos.x > handle.x ? 1 : -1;
+    const targetRotation: number = ROTATION_ANGLE * dirMultiplier;
+
+    isRotating = true;
+    let accumulated: number = 0;
+
+    const rotateFn = (ticker: Ticker): void => {
+      const delta: number = ROTATION_SPEED * ticker.deltaTime * dirMultiplier;
+      const nextAccum = accumulated + delta;
+
+    
+      if (Math.abs(nextAccum) >= Math.abs(targetRotation)) {
+        const remain: number = targetRotation - accumulated;
+        handle.rotation += remain;
+        handleShadow.rotation += remain;
+        app.ticker.remove(rotateFn);
         isRotating = false;
-        addRotation(direction === 1 ? 'clockwise' : 'counterclockwise');
+        const direction: Direction = dirMultiplier === 1 ? 'clockwise' : 'counterclockwise';
+        addRotation(direction);
         return;
       }
-      handle.rotation += step;
-      handleShadow.rotation += step;
-      rotated += step;
+
+      handle.rotation += delta;
+      handleShadow.rotation += delta;
+      accumulated = nextAccum;
     };
 
-    app.ticker.add(rotate);
+    app.ticker.add(rotateFn);
   });
 }
 
 export function createAddRotation(
-  getState: () => {
-    inputSequence: { number: number; direction: Direction }[];
-    currentStepCount: number;
-    currentDirection: Direction | null;
-    unlocked: boolean;
-  },
-  setState: (state: {
-    inputSequence: { number: number; direction: Direction }[];
-    currentStepCount: number;
-    currentDirection: Direction | null;
-    unlocked: boolean;
-  }) => void,
+  getState: () => CombinationState,
+  setState: (newState: CombinationState) => void,
   checkCombination: () => void
 ): (direction: Direction) => void {
   return (direction: Direction): void => {
-    const state = getState();
+    const state: CombinationState = getState();
     if (state.unlocked) return;
 
-    const inputSequence = [...state.inputSequence];
-    let { currentDirection, currentStepCount } = state;
+    const sequence: CombinationStep[] = [...state.inputSequence];
+    let currentDirection: Direction | null = state.currentDirection;
+    let currentStepCount: number = state.currentStepCount;
 
-    if (!currentDirection || currentDirection !== direction) {
-      if (currentDirection)
-        inputSequence.push({ number: currentStepCount, direction: currentDirection });
+    if (currentDirection !== direction) {
+      if (currentDirection !== null) {
+        sequence.push({ number: currentStepCount, direction: currentDirection });
+      }
       currentDirection = direction;
       currentStepCount = 1;
     } else {
@@ -78,7 +88,7 @@ export function createAddRotation(
 
     setState({
       ...state,
-      inputSequence,
+      inputSequence: sequence,
       currentDirection,
       currentStepCount
     });

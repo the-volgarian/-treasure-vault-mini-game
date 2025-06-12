@@ -1,6 +1,6 @@
 import { Application, Text } from 'pixi.js';
 import gsap from 'gsap';
-import type { Sprite, Ticker } from 'pixi.js';
+import type { Sprite } from 'pixi.js';
 
 export type Direction = 'clockwise' | 'counterclockwise';
 
@@ -9,7 +9,7 @@ export interface CombinationStep {
   direction: Direction;
 }
 
-interface State {
+export interface State {
   secretCombination: CombinationStep[];
   inputSequence: CombinationStep[];
   currentStepCount: number;
@@ -17,7 +17,7 @@ interface State {
   unlocked: boolean;
 }
 
-interface CombinationContext {
+export interface CombinationContext {
   app: Application;
   gsap: typeof gsap;
   timerText: Text;
@@ -81,9 +81,8 @@ export function checkCombinationFactory(ctx: CombinationContext) {
       ctx.gsap.to([ctx.doorOpen, ctx.doorOpenShadow], { alpha: 1, duration: DOOR_ANIMATION_DURATION });
 
       let delayPassed = 0;
-
-      const delayTicker = (ticker: Ticker): void => {
-        delayPassed += ticker.deltaMS / 1000;
+      const delayTicker = (): void => {
+        delayPassed += ctx.app.ticker.deltaMS / 1000;
         if (delayPassed >= RESET_DELAY_SECONDS) {
           ctx.app.ticker.remove(delayTicker);
 
@@ -129,10 +128,6 @@ export function checkCombinationFactory(ctx: CombinationContext) {
   };
 }
 
-export function resetInput(): void {
-  //////////////////emty////////////////////////
-}
-
 export function spinHandleAndReset(ctx: CombinationContext): void {
   const target = ctx.handle.rotation - ROTATION_FULL;
 
@@ -143,7 +138,7 @@ export function spinHandleAndReset(ctx: CombinationContext): void {
       ctx.handleShadow.rotation = ctx.handle.rotation;
     },
     onComplete: () => {
-      const newState = {
+      const newState: State = {
         ...ctx.getState(),
         secretCombination: generateCombination(ctx),
         inputSequence: [],
