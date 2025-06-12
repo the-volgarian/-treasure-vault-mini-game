@@ -11,6 +11,7 @@ export interface CombinationStep {
 }
 
 export interface CombinationState {
+  secretCombination: CombinationStep[];
   inputSequence: CombinationStep[];
   currentStepCount: number;
   currentDirection: Direction | null;
@@ -87,10 +88,11 @@ export function createAddRotation(
     }
 
     setState({
-      ...state,
+      secretCombination: state.secretCombination,
       inputSequence: sequence,
       currentDirection,
-      currentStepCount
+      currentStepCount,
+      unlocked: state.unlocked
     });
 
     checkCombination();

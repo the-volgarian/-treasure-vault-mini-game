@@ -7,6 +7,7 @@ import { generateCombination, checkCombinationFactory } from '../logic/combinati
 import { setupResize } from '../ui/resize';
 import { createAddRotation, setupHandleInteraction } from '../logic/rotation';
 import type { State } from '../logic/combination';
+import type { CombinationState } from '../logic/rotation';
 
 const BLINK_SCALE_X = 1.1;
 const BLINK_SCALE_Y = 1.1;
@@ -71,7 +72,7 @@ async function startGame(): Promise<void> {
       currentDirection,
       unlocked
     }),
-    setState: (newState: State): void => {
+    setState: (newState: CombinationState): void => {
       secretCombination = newState.secretCombination;
       inputSequence = newState.inputSequence;
       currentStepCount = newState.currentStepCount;
