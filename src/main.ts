@@ -1,148 +1,123 @@
-import { Application, Assets, Sprite, Ticker, Text, TextStyle} from 'pixi.js';
+import { Application, Assets, Sprite, Ticker, Text, TextStyle } from 'pixi.js';
 import * as PIXI from 'pixi.js';
 import gsap from 'gsap';
 
+async function startGame(): Promise<void> {
+  const app = new Application();
+  await app.init({ resizeTo: window, background: '#000000' });
+  document.body.appendChild(app.canvas);
 
+  const [bgTexture, vaultTexture, handleTexture, handleShadowTexture, doorOpenTexture, doorOpenShadowTexture, blinkTexture] = await Promise.all([
+    Assets.load('./assets/bg.png'),
+    Assets.load('./assets/door.png'),
+    Assets.load('./assets/handle.png'),
+    Assets.load('./assets/handleShadow.png'),
+    Assets.load('./assets/doorOpen.png'),
+    Assets.load('./assets/doorOpenShadow.png'),
+    Assets.load('./assets/blink.png')
+  ]);
 
-async function startGame () {
-        const app = new Application();
+  const background = new Sprite(bgTexture);
+  const door = new Sprite(vaultTexture);
+  const doorOpen = new Sprite(doorOpenTexture);
+  const doorOpenShadow = new Sprite(doorOpenShadowTexture);
+  const handle = new Sprite(handleTexture);
+  const handleShadow = new Sprite(handleShadowTexture);
+  const blink = new Sprite(blinkTexture);
 
-        await app.init({
-            resizeTo: window,
-            background: '#000000',
-        });
+  blink.anchor.set(0.5);
+  blink.x = app.screen.width / 2 + 15;
+  blink.y = app.screen.height / 2 - 14;
+  blink.width = app.screen.width * 0.32;
+  blink.height = blink.width * (blinkTexture.height / blinkTexture.width);
 
-        document.body.appendChild(app.canvas);
+  door.anchor.set(0.5);
+  door.x = app.screen.width / 2 + 15;
+  door.y = app.screen.height / 2 - 14;
+  door.width = app.screen.width * 0.32;
+  door.height = door.width * (vaultTexture.height / vaultTexture.width);
 
-    
-        const texture = await Assets.load('./assets/bg.png');
-        const vaultTexture = await Assets.load('./assets/door.png');
-        const handleTexture = await Assets.load('./assets/handle.png');
-        const handleShadowTexture = await Assets.load('./assets/handleShadow.png');
-        const doorOpenTexture = await Assets.load('./assets/doorOpen.png');
-        const doorOpenShadowTexture = await Assets.load('./assets/doorOpenShadow.png');
-        const blinkTexture = await Assets.load('./assets/blink.png');
+  doorOpen.anchor.set(0.5);
+  doorOpen.x = app.screen.width / 2 + 450;
+  doorOpen.y = app.screen.height / 2 - 14;
+  doorOpen.width = app.screen.width * 0.32;
+  doorOpen.height = doorOpen.width * (doorOpenTexture.height / doorOpenTexture.width);
 
-        const blink = new Sprite(blinkTexture);
-        blink.anchor.set(0.5);
-        blink.x = app.screen.width / 2 + 15;
-        blink.y = app.screen.height / 2 - 14;
-        blink.width = app.screen.width * 0.32;
-        blink.height = blink.width * (blinkTexture.height / blinkTexture.width);
+  doorOpenShadow.anchor.set(0.5);
+  doorOpenShadow.x = app.screen.width / 2 + 460;
+  doorOpenShadow.y = app.screen.height / 2 + 10;
+  doorOpenShadow.width = app.screen.width * 0.32;
+  doorOpenShadow.height = doorOpenShadow.width * (doorOpenShadowTexture.height / doorOpenShadowTexture.width);
 
-        const door = new Sprite(vaultTexture);
-        door.anchor.set(0.5);
-        door.x = app.screen.width / 2 + 15;
-        door.y = app.screen.height / 2 - 14;
-        door.width = app.screen.width * 0.32;
-        door.height = door.width * (vaultTexture.height / vaultTexture.width);
+  handle.anchor.set(0.5);
+  handle.x = app.screen.width / 2 - 8;
+  handle.y = app.screen.height / 2 - 14;
+  handle.width = app.screen.width * 0.12;
+  handle.height = handle.width * (handleTexture.height / handleTexture.width);
 
-        const doorOpen = new Sprite(doorOpenTexture);
-        doorOpen.anchor.set(0.5);
-        doorOpen.x = app.screen.width / 2 + 450;
-        doorOpen.y = app.screen.height / 2 - 14;
-        doorOpen.width = app.screen.width * 0.32;
-        doorOpen.height = doorOpen.width * (doorOpenTexture.height / doorOpenTexture.width);
+  handleShadow.anchor.set(0.5);
+  handleShadow.x = app.screen.width / 2 - 8;
+  handleShadow.y = app.screen.height / 2 - 3;
+  handleShadow.width = app.screen.width * 0.12;
+  handleShadow.height = handleShadow.width * (handleShadowTexture.height / handleShadowTexture.width);
 
-        const doorOpenShadow = new Sprite(doorOpenShadowTexture);
-        doorOpenShadow.anchor.set(0.5);
-        doorOpenShadow.x = app.screen.width / 2 + 460;
-        doorOpenShadow.y = app.screen.height / 2 + 10;
-        doorOpenShadow.width = app.screen.width * 0.32;
-        doorOpenShadow.height = doorOpenShadow.width * (doorOpenShadowTexture.height / doorOpenShadowTexture.width);
+  background.width = app.screen.width;
+  background.height = app.screen.height;
 
-        const handle = new Sprite(handleTexture);
-        handle.anchor.set(0.5);
-        handle.x = app.screen.width / 2 - 8;
-        handle.y = app.screen.height / 2 - 14;
-        handle.width = app.screen.width * 0.12;
-        handle.height = app.screen.height * 0.32;
-        handle.height = handle.width * (handleTexture.height / handleTexture.width);
+  const setupScene = (sprites: { [key: string]: PIXI.Sprite }) => {
+    Object.values(sprites).forEach(sprite => app.stage.addChild(sprite));
+  };
+  setupScene({ background, blink, door, doorOpenShadow, doorOpen, handleShadow, handle });
 
-        const handleShadow = new Sprite(handleShadowTexture);
-        handleShadow.anchor.set(0.5);
-        handleShadow.x = app.screen.width / 2 - 8;
-        handleShadow.y = app.screen.height / 2 - 3;
-        handleShadow.width = app.screen.width * 0.12;
-        handleShadow.height = app.screen.height * 0.32;
-        handleShadow.height = handleShadow.width * (handleShadowTexture.height / handleShadowTexture.width);
+  doorOpen.visible = false;
+  doorOpenShadow.visible = false;
+  door.visible = true;
 
-        const background = new Sprite(texture);
-        background.width = app.screen.width;
-        background.height = app.screen.height;
-    
-        function setupScene(sprites: { [key: string]: PIXI.Sprite }) {
-            for (const key in sprites) {
-                app.stage.addChild(sprites[key]);
-            }
-        }
+  gsap.to(blink.scale, {
+    x: 1.1,
+    y: 1.1,
+    duration: 0.8,
+    ease: "sine.inOut",
+    yoyo: true,
+    repeat: -1
+  });
 
-        setupScene({background, blink, door, doorOpenShadow, doorOpen, handleShadow, handle})
+  const timerText = new Text('00:00', new TextStyle({ fontFamily: 'Arial', fontSize: 55, fill: '#ff0000', stroke: '#000000', align: 'center' }));
+  timerText.anchor.set(0.5);
+  timerText.x = app.screen.width / 3 - 45;
+  timerText.y = app.screen.height / 2 - 36;
+  app.stage.addChild(timerText);
 
+  let countdownInterval: ReturnType<typeof setInterval> | null = null;
+  const formatTime = (seconds: number): string => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
-        gsap.to(blink.scale, {
-            x: 1.1,
-            y: 1.1,
-            duration: 0.8,
-            ease: "sine.inOut",
-            yoyo: true,
-            repeat: -1
-        });
+    function startTimer(seconds: number): void {
+    let timePassed = 0;
+    timerText.text = formatTime(timePassed);
+    timerText.visible = true;
 
+    app.ticker.add(tick);
 
-        const timerStyle = new TextStyle({
-        fontFamily: 'Arial',
-        fontSize: 55,
-        fill: '#ff0000',
-        stroke: '#000000',
-        align: 'center',
-        });
+    function tick(): void {
+      const delta = app.ticker.deltaMS / 1000;
+      timePassed += delta;
 
-        const timerText = new Text('10000000', timerStyle);
-        timerText.anchor.set(0.5);
-        timerText.x = app.screen.width / 3 - 45;  
-        timerText.y = app.screen.height / 2 - 36;
-        app.stage.addChild(timerText);
+      timerText.text = formatTime(Math.floor(timePassed));
 
-        let countdownInterval: ReturnType<typeof setInterval> | null = null;
-
-        function formatTime(seconds: number): string {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-
-        function startTimer(seconds: number) {
-        if (countdownInterval) clearInterval(countdownInterval);
-
-        let timePassed = 0;
-        timerText.text = formatTime(timePassed);
-        timerText.visible = true;
-
-        countdownInterval = setInterval(() => {
-            timePassed++;
-            timerText.text = formatTime(timePassed);
-
-            if (timePassed >= seconds) {
-                if (countdownInterval) clearInterval(countdownInterval);
-                timerText.visible = false;
-
-                console.log('%cTime is up! Generating a new code.', 'color: orange');
-                secretCombination = generateCombination();
-                inputSequence = [];
-                currentStepCount = 0;
-                currentDirection = null;
-                unlocked = false;
-            }
-        }, 1000);
+      if (Math.floor(timePassed) >= seconds) {
+        timerText.visible = false;
+        secretCombination = generateCombination();
+        inputSequence = [];
+        currentStepCount = 0;
+        currentDirection = null;
+        unlocked = false;
+        app.ticker.remove(tick);
+      }
     }
-
-
-        
+  }
 
     function resizeGame() {
         app.renderer.resize(window.innerWidth, window.innerHeight);
-        
     
         const originalBgWidth = background.texture.width;
         const originalBgHeight = background.texture.height;
@@ -157,8 +132,6 @@ async function startGame () {
         } else {
             scaleFactor = app.screen.height / originalBgHeight;
         }
-        
-
     
         const isMobile = window.innerWidth < 768;
         if (isMobile) {
@@ -195,244 +168,169 @@ async function startGame () {
         handleShadow.scale.set(handleScale);
         handleShadow.position.set(app.screen.width / 2 - 33 * scaleFactor, app.screen.height / 2 + 5 * scaleFactor);
 
-        
         timerText.scale.set(scaleFactor);
         timerText.position.set(app.screen.width / 2 - 1180 * scaleFactor, app.screen.height / 2 - 145 * scaleFactor);
 
 
     }
 
+  window.addEventListener('resize', resizeGame);
+  resizeGame();
 
+  type Direction = 'clockwise' | 'counterclockwise';
+  interface CombinationStep {
+    number: number;
+    direction: Direction;
+  }
 
+  const COMBINATION_LENGTH = 4;
 
-    window.addEventListener('resize', resizeGame);
-    resizeGame(); 
-    
-    
-    
-        doorOpen.visible = false;
-        doorOpenShadow.visible = false;
+  let secretCombination: CombinationStep[] = [];
+  let inputSequence: CombinationStep[] = [];
+  let currentStepCount = 0;
+  let currentDirection: Direction | null = null;
+  let unlocked = false;
 
-        handle.eventMode = 'static';
-        handle.cursor = 'pointer';
-
-        let isRotating = false;
-
-        handle.on('pointerdown', (event) => {
-        if (isRotating) return;
-
-        const clickPos = event.data.global;
-        const direction = clickPos.x > handle.x ? 1 : -1;
-        const rotationTarget = (Math.PI / 3) * direction;
-
-        isRotating = true;
-        let rotated = 0;
-
-        function rotate(ticker: Ticker) {
-            const step = 0.05 * ticker.deltaTime * direction;
-            if (Math.abs(rotated + step) >= Math.abs(rotationTarget)) {
-                const remaining = rotationTarget - rotated;
-                handle.rotation += remaining;
-                handleShadow.rotation += remaining;
-                app.ticker.remove(rotate);
-                isRotating = false;
-
-                addRotation(direction === 1 ? 'clockwise' : 'counterclockwise');
-                return;
-            }
-            handle.rotation += step;
-            handleShadow.rotation += step;
-            rotated += step;
-        }
-
-        app.ticker.add(rotate);
-    });
-
-        type Direction = 'clockwise' | 'counterclockwise';
-
-        interface CombinationStep {
-            number: number;
-            direction: Direction;
-        }
-
-        let codeResetTimer: ReturnType<typeof setTimeout> | null = null;
-
-        
-
-const COMBINATION_LENGTH = 4;
-const POSSIBLE_DIRECTIONS: Direction[] = ['clockwise', 'counterclockwise'];
-
-function generateCombination(): CombinationStep[] {
-    if (codeResetTimer) clearTimeout(codeResetTimer);
-
+  function generateCombination(): CombinationStep[] {
     startTimer(100000000);
-
     const combination: CombinationStep[] = [];
-    
-
-    let currentDirection: Direction = Math.random() < 0.5 ? POSSIBLE_DIRECTIONS[0] : POSSIBLE_DIRECTIONS[1];
-
+    let direction: Direction = Math.random() < 0.5 ? 'clockwise' : 'counterclockwise';
     for (let i = 0; i < COMBINATION_LENGTH; i++) {
-        const number = Math.floor(Math.random() * 9) + 1; 
-        combination.push({ number, direction: currentDirection });
-
-        currentDirection = currentDirection === POSSIBLE_DIRECTIONS[0] ? POSSIBLE_DIRECTIONS[1] : POSSIBLE_DIRECTIONS[0];
+      const number = Math.floor(Math.random() * 9) + 1;
+      combination.push({ number, direction });
+      direction = direction === 'clockwise' ? 'counterclockwise' : 'clockwise';
     }
-
     console.log('%cSecret combination:', 'color: blue', combination);
     return combination;
-}
+  }
+  secretCombination = generateCombination();
 
+  function resetInput(): void {
+    inputSequence = [];
+    currentDirection = null;
+    currentStepCount = 0;
+  }
 
-        let secretCombination = generateCombination();
-        let inputSequence: CombinationStep[] = [];
-        let currentStepCount = 0;
-        let currentDirection: Direction | null = null;
-        let unlocked = false;
-        let thirdStepTimer: ReturnType<typeof setTimeout> | null = null;
+  function spinHandleAndReset(): void {
+    const target = handle.rotation - Math.PI * 2;
+    gsap.to(handle, {
+      rotation: target,
+      duration: 1,
+      onUpdate: () => { handleShadow.rotation = handle.rotation; },
+      onComplete: () => {
+        secretCombination = generateCombination();
+        resetInput();
+        unlocked = false;
+        door.visible = true;
+        doorOpen.visible = false;
+        doorOpenShadow.visible = false;
+      }
+    });
+  }
 
-
-
-    function addRotation(direction: 'clockwise' | 'counterclockwise') {
-        if (unlocked) return;
-
-        if (currentDirection === null || currentDirection !== direction) {
-            if (currentDirection !== null) {
-                inputSequence.push({ number: currentStepCount, direction: currentDirection });
-                console.log('Added step:', { number: currentStepCount, direction: currentDirection });
-            }
-
-            currentDirection = direction;
-            currentStepCount = 1;
-        } else {
-            currentStepCount++;
-        }
-
-        checkCombination();
+  function addRotation(direction: Direction): void {
+    if (unlocked) return;
+    if (!currentDirection || currentDirection !== direction) {
+      if (currentDirection) inputSequence.push({ number: currentStepCount, direction: currentDirection });
+      currentDirection = direction;
+      currentStepCount = 1;
+    } else {
+      currentStepCount++;
     }
+    checkCombination();
+  }
 
-        function resetInput() {
-            console.log('%cResetting input due to invalid direction sequence.', 'color: red');
-            inputSequence = [];
-            currentDirection = null;
-            currentStepCount = 0;
-            if (thirdStepTimer) {
-                clearTimeout(thirdStepTimer);
-                thirdStepTimer = null;
-            }
-        }
+  function checkCombination(): void {
+    if (unlocked) return;
+    const temp: CombinationStep[] = [...inputSequence];
+    if (currentDirection && currentStepCount > 0) temp.push({ number: currentStepCount, direction: currentDirection });
+    for (let i = 0; i < temp.length; i++) {
+      const entered = temp[i], expected = secretCombination[i];
+      if (!expected || entered.number > expected.number || entered.direction !== expected.direction) {
+        resetInput();
+        spinHandleAndReset();
+        return;
+      }
+    }
+    if (temp.length === secretCombination.length && temp.every((s, i) => s.number === secretCombination[i].number && s.direction === secretCombination[i].direction)) {
+      unlocked = true;
+      gsap.to([door, handle, handleShadow], { alpha: 0, duration: 0.3 });
+      doorOpen.alpha = 0;
+      doorOpenShadow.alpha = 0;
+      doorOpen.visible = true;
+      doorOpenShadow.visible = true;
+      gsap.to([doorOpen, doorOpenShadow], { alpha: 1, duration: 0.3 });
+      ///// setTimeout Block /////
+      let delayPassed = 0;
+      const delayDuration = 5; // seconds
 
-    function spinHandleAndReset() {
-        const targetRotation = handle.rotation - Math.PI * 2;
+      const delayTicker = (ticker: Ticker): void => {
+        delayPassed += ticker.deltaMS / 1000;
+        if (delayPassed >= delayDuration) {
+          app.ticker.remove(delayTicker);
 
-        gsap.to(handle, {
-            rotation: targetRotation,
-            duration: 1,
-            ease: 'power2.inOut',
-            onUpdate: () => {
-                handleShadow.rotation = handle.rotation;
-            },
+          gsap.to([doorOpen, doorOpenShadow], {
+            alpha: 0,
+            duration: 0.3,
             onComplete: () => {
-                secretCombination = generateCombination();
-                inputSequence = [];
-                currentDirection = null;
-                currentStepCount = 0;
-                unlocked = false;
-
-                door.visible = true;
-                doorOpen.visible = false;
-                doorOpenShadow.visible = false;
-            }
-        });
-    }
-
-
-    function checkCombination() {
-        if (unlocked) return;
-
-        if (inputSequence.length === 0 && currentDirection === null) return;
-
-        const tempSequence = [...inputSequence];
-        if (currentDirection !== null && currentStepCount > 0) {
-            tempSequence.push({ number: currentStepCount, direction: currentDirection });
-        }
-
-        console.log('%cEntered combination:', 'color: cyan', tempSequence);
-        console.log('%cExpected combination:', 'color: yellow', secretCombination);
-
-        for (let i = 0; i < tempSequence.length; i++) {
-            const enteredStep = tempSequence[i];
-            const expectedStep = secretCombination[i];
-
-            if (
-                !expectedStep || 
-                enteredStep.number > expectedStep.number || 
-                enteredStep.direction !== expectedStep.direction
-            ) {
-                console.log('%cInvalid prefix detected, resetting...', 'color: red');
-                resetInput();
-                spinHandleAndReset();
-                return;
-            }
-        }
-
-        if (tempSequence.length === secretCombination.length) {
-            const isExactMatch = tempSequence.every((step, i) =>
-                step.number === secretCombination[i].number &&
-                step.direction === secretCombination[i].direction
-            );
-
-            if (isExactMatch) {
-        unlocked = true;
-
-        gsap.to([door, handle, handleShadow], { alpha: 0, duration: 0.3 });
-
-        doorOpen.alpha = 0;
-        doorOpenShadow.alpha = 0;
-        doorOpen.visible = true;
-        doorOpenShadow.visible = true;
-
-        gsap.to([doorOpen, doorOpenShadow], { alpha: 1, duration: 0.3 });
-
-        setTimeout(() => {
-            gsap.to([doorOpen, doorOpenShadow], {
-                alpha: 0,
-                duration: 0.3,
+              doorOpen.visible = false;
+              doorOpenShadow.visible = false;
+              door.visible = true;
+              handle.visible = true;
+              handleShadow.visible = true;
+              gsap.to([door, handle, handleShadow], { alpha: 1, duration: 0.3 });
+              gsap.fromTo(handle, { rotation: 0 }, {
+                rotation: Math.PI * 2,
+                duration: 1,
+                ease: 'power1.out',
+                onUpdate: () =>{handleShadow.rotation = handle.rotation},
                 onComplete: () => {
-                    doorOpen.visible = false;
-                    doorOpenShadow.visible = false;
-
-                    door.visible = true;
-                    handle.visible = true;
-                    handleShadow.visible = true;
-
-                    gsap.to([door, handle, handleShadow], { alpha: 1, duration: 0.3 });
-
-                    gsap.fromTo(handle, 
-                        { rotation: 0 }, 
-                        { 
-                            rotation: Math.PI * 2, 
-                            duration: 1, 
-                            ease: 'power1.out',
-                            onUpdate: () => { handleShadow.rotation = handle.rotation },
-                            onComplete: () => {
-                                unlocked = false;
-                                inputSequence = [];
-                                currentDirection = null;
-                                currentStepCount = 0;
-                                secretCombination = generateCombination();
-                            }
-                        });
+                  unlocked = false;
+                  resetInput();
+                  secretCombination = generateCombination();
                 }
-            });
-        }, 5000);
-                timerText.visible = false;
-                if (countdownInterval) clearInterval(countdownInterval);
+              });
             }
+          });
         }
+      };
+      app.ticker.add(delayTicker);
+      /////
+      timerText.visible = false;
+      if (countdownInterval) if (countdownInterval !== null) clearInterval(countdownInterval);
     }
+  }
 
+  handle.eventMode = 'static';
+  handle.cursor = 'pointer';
+  let isRotating = false;
 
+  handle.on('pointerdown', (event: PIXI.FederatedPointerEvent): void => {
+    if (isRotating) return;
+    const clickPos = event.data.global;
+    const direction = clickPos.x > handle.x ? 1 : -1;
+    const target = (Math.PI / 3) * direction;
+    isRotating = true;
+    let rotated = 0;
+
+    const rotate = (ticker: Ticker): void => {
+      const step = 0.05 * ticker.deltaTime * direction;
+      if (Math.abs(rotated + step) >= Math.abs(target)) {
+        const remaining = target - rotated;
+        handle.rotation += remaining;
+        handleShadow.rotation += remaining;
+        app.ticker.remove(rotate);
+        isRotating = false;
+        addRotation(direction === 1 ? 'clockwise' : 'counterclockwise');
+        return;
+      }
+      handle.rotation += step;
+      handleShadow.rotation += step;
+      rotated += step;
+    };
+
+    app.ticker.add(rotate);
+  });
 }
 
 startGame();
