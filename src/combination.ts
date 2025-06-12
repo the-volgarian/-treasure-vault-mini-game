@@ -30,6 +30,14 @@ interface CombinationContext {
   setState: (state: State) => void;
 }
 
+const ROTATION_FULL = Math.PI * 2;
+const COMBINATION_LENGTH = 4;
+const MAX_COMBINATION_STEP = 9;
+const COMBINATION_MIN_STEP = 1;
+const DOOR_ANIMATION_DURATION = 0.3;
+const HANDLE_ROTATION_DURATION = 1;
+const RESET_DELAY_SECONDS = 5;
+
 export function checkCombinationFactory(ctx: CombinationContext) {
   return function checkCombination(): void {
     const state = ctx.getState();
@@ -64,25 +72,24 @@ export function checkCombinationFactory(ctx: CombinationContext) {
     ) {
       ctx.setState({ ...state, unlocked: true });
 
-      ctx.gsap.to([ctx.door, ctx.handle, ctx.handleShadow], { alpha: 0, duration: 0.3 });
+      ctx.gsap.to([ctx.door, ctx.handle, ctx.handleShadow], { alpha: 0, duration: DOOR_ANIMATION_DURATION });
       ctx.doorOpen.alpha = 0;
       ctx.doorOpenShadow.alpha = 0;
       ctx.doorOpen.visible = true;
       ctx.doorOpenShadow.visible = true;
 
-      ctx.gsap.to([ctx.doorOpen, ctx.doorOpenShadow], { alpha: 1, duration: 0.3 });
+      ctx.gsap.to([ctx.doorOpen, ctx.doorOpenShadow], { alpha: 1, duration: DOOR_ANIMATION_DURATION });
 
       let delayPassed = 0;
-      const delayDuration = 5;
 
       const delayTicker = (ticker: Ticker): void => {
         delayPassed += ticker.deltaMS / 1000;
-        if (delayPassed >= delayDuration) {
+        if (delayPassed >= RESET_DELAY_SECONDS) {
           ctx.app.ticker.remove(delayTicker);
 
           ctx.gsap.to([ctx.doorOpen, ctx.doorOpenShadow], {
             alpha: 0,
-            duration: 0.3,
+            duration: DOOR_ANIMATION_DURATION,
             onComplete: () => {
               ctx.doorOpen.visible = false;
               ctx.doorOpenShadow.visible = false;
@@ -90,11 +97,11 @@ export function checkCombinationFactory(ctx: CombinationContext) {
               ctx.handle.visible = true;
               ctx.handleShadow.visible = true;
 
-              ctx.gsap.to([ctx.door, ctx.handle, ctx.handleShadow], { alpha: 1, duration: 0.3 });
+              ctx.gsap.to([ctx.door, ctx.handle, ctx.handleShadow], { alpha: 1, duration: DOOR_ANIMATION_DURATION });
 
               ctx.gsap.fromTo(ctx.handle, { rotation: 0 }, {
-                rotation: Math.PI * 2,
-                duration: 1,
+                rotation: ROTATION_FULL,
+                duration: HANDLE_ROTATION_DURATION,
                 ease: 'power1.out',
                 onUpdate: () => {
                   ctx.handleShadow.rotation = ctx.handle.rotation;
@@ -127,11 +134,11 @@ export function resetInput(): void {
 }
 
 export function spinHandleAndReset(ctx: CombinationContext): void {
-  const target = ctx.handle.rotation - Math.PI * 2;
+  const target = ctx.handle.rotation - ROTATION_FULL;
 
   ctx.gsap.to(ctx.handle, {
     rotation: target,
-    duration: 1,
+    duration: HANDLE_ROTATION_DURATION,
     onUpdate: () => {
       ctx.handleShadow.rotation = ctx.handle.rotation;
     },
@@ -154,11 +161,10 @@ export function spinHandleAndReset(ctx: CombinationContext): void {
 
 export function generateCombination(ctx: CombinationContext): CombinationStep[] {
   const combination: CombinationStep[] = [];
-  const length = 4;
   let direction: Direction = Math.random() < 0.5 ? 'clockwise' : 'counterclockwise';
 
-  for (let i = 0; i < length; i++) {
-    const number = Math.floor(Math.random() * 9) + 1;
+  for (let i = 0; i < COMBINATION_LENGTH; i++) {
+    const number = Math.floor(Math.random() * MAX_COMBINATION_STEP) + COMBINATION_MIN_STEP;
     combination.push({ number, direction });
     direction = direction === 'clockwise' ? 'counterclockwise' : 'clockwise';
   }

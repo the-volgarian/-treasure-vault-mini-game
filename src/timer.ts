@@ -1,17 +1,24 @@
 import { Application, Text, TextStyle } from 'pixi.js';
 
+const TIMER_FONT_SIZE = 55;
+const TIMER_FILL_COLOR = '#ff0000';
+const TIMER_STROKE_COLOR = '#000000';
+const TIMER_X_OFFSET = 45;
+const TIMER_Y_OFFSET = 36;
+const TIMER_DURATION_SECONDS = 100000000;
+
 export function initTimer(app: Application): Text {
   const timerText = new Text('00:00', new TextStyle({
     fontFamily: 'Arial',
-    fontSize: 55,
-    fill: '#ff0000',
-    stroke: '#000000',
+    fontSize: TIMER_FONT_SIZE,
+    fill: TIMER_FILL_COLOR,
+    stroke: TIMER_STROKE_COLOR,
     align: 'center',
   }));
 
   timerText.anchor.set(0.5);
-  timerText.x = app.screen.width / 3 - 45;
-  timerText.y = app.screen.height / 2 - 36;
+  timerText.x = app.screen.width / 3 - TIMER_X_OFFSET;
+  timerText.y = app.screen.height / 2 - TIMER_Y_OFFSET;
 
   app.stage.addChild(timerText);
   return timerText;
@@ -28,14 +35,13 @@ export function startTimer(app: Application, timerText: Text, onTimeout: () => v
 
     timerText.text = formatTime(Math.floor(timePassed));
 
-    if (Math.floor(timePassed) >= seconds) {
+    if (Math.floor(timePassed) >= TIMER_DURATION_SECONDS) {
       timerText.visible = false;
       app.ticker.remove(tick);
       onTimeout();
     }
   };
 
-  const seconds = 100000000; 
   app.ticker.add(tick);
 }
 

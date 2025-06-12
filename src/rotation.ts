@@ -1,5 +1,9 @@
 import { Application, Ticker, FederatedPointerEvent, Sprite } from 'pixi.js';
 
+
+const ROTATION_ANGLE = Math.PI / 3;
+const ROTATION_SPEED = 0.05;
+
 type Direction = 'clockwise' | 'counterclockwise';
 
 export function setupHandleInteraction(
@@ -17,12 +21,12 @@ export function setupHandleInteraction(
     if (isRotating) return;
     const clickPos = event.data.global;
     const direction = clickPos.x > handle.x ? 1 : -1;
-    const target = (Math.PI / 3) * direction;
+    const target = ROTATION_ANGLE * direction;
     isRotating = true;
     let rotated = 0;
 
     const rotate = (ticker: Ticker): void => {
-      const step = 0.05 * ticker.deltaTime * direction;
+      const step = ROTATION_SPEED * ticker.deltaTime * direction;
       if (Math.abs(rotated + step) >= Math.abs(target)) {
         const remaining = target - rotated;
         handle.rotation += remaining;
@@ -43,14 +47,12 @@ export function setupHandleInteraction(
 
 export function createAddRotation(
   getState: () => {
-    secretCombination: { number: number; direction: Direction }[];
     inputSequence: { number: number; direction: Direction }[];
     currentStepCount: number;
     currentDirection: Direction | null;
     unlocked: boolean;
   },
   setState: (state: {
-    secretCombination: { number: number; direction: Direction }[];
     inputSequence: { number: number; direction: Direction }[];
     currentStepCount: number;
     currentDirection: Direction | null;
@@ -84,4 +86,3 @@ export function createAddRotation(
     checkCombination();
   };
 }
-

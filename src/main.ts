@@ -7,14 +7,20 @@ import { generateCombination, resetInput, spinHandleAndReset, checkCombinationFa
 import { setupResize } from './resize';
 import { createAddRotation, setupHandleInteraction } from './rotation';
 
+const BLINK_SCALE_X = 1.1;
+const BLINK_SCALE_Y = 1.1;
+const BLINK_ANIMATION_DURATION = 0.8;
+const BLINK_ANIMATION_EASE = "sine.inOut";
+const BLINK_REPEAT = -1;
+const BACKGROUND_COLOR = '#000000';
 
 async function startGame(): Promise<void> {
   const app = new Application();
-  await app.init({ resizeTo: window, background: '#000000' });
+  await app.init({ resizeTo: window, background: BACKGROUND_COLOR });
   document.body.appendChild(app.canvas);
 
   const { background, door, doorOpen, doorOpenShadow, handle, handleShadow, blink } = await setupSprites(app);
-  
+
   const setupScene = (sprites: { [key: string]: PIXI.Sprite }) => {
     Object.values(sprites).forEach(sprite => app.stage.addChild(sprite));
   };
@@ -25,27 +31,30 @@ async function startGame(): Promise<void> {
   door.visible = true;
 
   gsap.to(blink.scale, {
-    x: 1.1,
-    y: 1.1,
-    duration: 0.8,
-    ease: "sine.inOut",
+    x: BLINK_SCALE_X,
+    y: BLINK_SCALE_Y,
+    duration: BLINK_ANIMATION_DURATION,
+    ease: BLINK_ANIMATION_EASE,
     yoyo: true,
-    repeat: -1
+    repeat: BLINK_REPEAT
   });
 
-  
   const timerText = initTimer(app);
   setupResize(app, background, blink, door, doorOpen, doorOpenShadow, handle, handleShadow, timerText);
 
-
-    
   type Direction = 'clockwise' | 'counterclockwise';
   interface CombinationStep {
     number: number;
     direction: Direction;
   }
 
-  const COMBINATION_LENGTH = 4;
+  interface State {
+    secretCombination: CombinationStep[];
+    inputSequence: CombinationStep[];
+    currentStepCount: number;
+    currentDirection: Direction | null;
+    unlocked: boolean;
+  }
 
   let secretCombination: CombinationStep[] = [];
   let inputSequence: CombinationStep[] = [];
@@ -53,66 +62,7 @@ async function startGame(): Promise<void> {
   let currentDirection: Direction | null = null;
   let unlocked = false;
 
-  type CombinationContext = {
-  app: Application;
-  gsap: typeof gsap;
-  timerText: PIXI.Text;
-  handle: PIXI.Sprite;
-  handleShadow: PIXI.Sprite;
-  door: PIXI.Sprite;
-  doorOpen: PIXI.Sprite;
-  doorOpenShadow: PIXI.Sprite;
-  getState: () => {
-    secretCombination: CombinationStep[];
-    inputSequence: CombinationStep[];
-    currentStepCount: number;
-    currentDirection: Direction | null;
-    unlocked: boolean;
-  };
-  setState: (newState: {
-    secretCombination: CombinationStep[];
-    inputSequence: CombinationStep[];
-    currentStepCount: number;
-    currentDirection: Direction | null;
-    unlocked: boolean;
-  }) => void;
-};
-
-const combinationContext: CombinationContext = {
-  app,
-  gsap,
-  timerText,
-  handle,
-  handleShadow,
-  door,
-  doorOpen,
-  doorOpenShadow,
-  getState: () => ({
-    secretCombination,
-    inputSequence,
-    currentStepCount,
-    currentDirection,
-    unlocked
-  }),
-  setState: (newState) => {
-    secretCombination = newState.secretCombination;
-    inputSequence = newState.inputSequence;
-    currentStepCount = newState.currentStepCount;
-    currentDirection = newState.currentDirection;
-    unlocked = newState.unlocked;
-  }
-};
-
-secretCombination = generateCombination(combinationContext);
-startTimer(app, timerText, () => {
-  secretCombination = generateCombination(combinationContext);
-});
-
-
-
-  
-
-  const checkCombination = checkCombinationFactory({
+  const combinationContext = {
     app,
     gsap,
     timerText,
@@ -121,32 +71,36 @@ startTimer(app, timerText, () => {
     door,
     doorOpen,
     doorOpenShadow,
-    getState: () => ({
+    getState: (): State => ({
       secretCombination,
       inputSequence,
       currentStepCount,
       currentDirection,
       unlocked
     }),
-    setState: (newState) => {
+    setState: (newState: State): void => {
       secretCombination = newState.secretCombination;
       inputSequence = newState.inputSequence;
       currentStepCount = newState.currentStepCount;
       currentDirection = newState.currentDirection;
       unlocked = newState.unlocked;
     }
+  };
+
+  secretCombination = generateCombination(combinationContext);
+  startTimer(app, timerText, () => {
+    secretCombination = generateCombination(combinationContext);
   });
 
-const addRotation = createAddRotation(
-  combinationContext.getState,
-  combinationContext.setState,
-  checkCombination
-);
+  const checkCombination = checkCombinationFactory(combinationContext);
 
-  
+  const addRotation = createAddRotation(
+    combinationContext.getState,
+    combinationContext.setState,
+    checkCombination
+  );
 
-setupHandleInteraction(app, handle, handleShadow, addRotation);
-
+  setupHandleInteraction(app, handle, handleShadow, addRotation);
 }
 
 startGame();
